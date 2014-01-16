@@ -28,6 +28,15 @@ module SpecInfra
         true
       end
 
+      def transaction
+        stack_size = @images.size
+        begin
+          yield
+        ensure
+          @images.pop(@images.size - stack_size)
+        end
+      end
+
       private
 
       def base_image
@@ -54,6 +63,7 @@ module SpecInfra
           begin
             stdout, stderr = container.attach
             result = container.wait
+            @images << container.commit
             return {:stdout => stdout.join, :stderr => stderr.join,
               :exit_status => result['StatusCode'], :exit_signal => nil}
           rescue
